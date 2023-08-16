@@ -12,7 +12,7 @@ import (
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"ohmyhelper-bilibili/internal/delegate"
-	"ohmyhelper-bilibili/internal/runner"
+	"ohmyhelper-bilibili/internal/task"
 	"ohmyhelper-bilibili/pkg/util"
 	"os"
 	"path"
@@ -85,7 +85,7 @@ func main() {
 	}
 
 	// run task
-	runner.Run(ctx)
+	task.Run(ctx)
 
 	d, err := db.DB()
 	if err != nil {

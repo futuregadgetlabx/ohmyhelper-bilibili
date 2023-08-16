@@ -1,8 +1,9 @@
-package runner
+package task
 
 import (
 	"fmt"
 	"math/rand"
+	"ohmyhelper-bilibili/internal/model"
 	"strconv"
 	"strings"
 )
@@ -23,7 +24,17 @@ var regionIds = []int{
 	181, // 影视
 }
 
-func runWatchVideoTask() {
+func getVideo() *model.RegionRank {
+	videos, err := d.GetTrendVideo(regionIds[rand.Intn(len(regionIds))])
+	if err != nil {
+		log.WithError(err).Error("获取分区视频失败")
+		return nil
+	}
+	return &videos[0]
+}
+
+func doWatchVideo() {
+	v := getVideo()
 	rewardStatus, err := d.GetExpRewardStatus()
 	if err != nil {
 		log.WithError(err).Error("获取每日经验奖励状态失败")
@@ -31,16 +42,10 @@ func runWatchVideoTask() {
 	}
 
 	if rewardStatus.Watch {
-		//log.Info("今日观看视频任务已完成")
-		//return
-	}
-
-	videos, err := d.GetTrendVideo(regionIds[rand.Intn(len(regionIds))])
-	if err != nil {
-		log.WithError(err).Error("获取分区视频失败")
+		log.Info("今日观看视频任务已完成")
 		return
 	}
-	v := videos[0]
+
 	seconds, err := convertToSeconds(v.Duration)
 	if err != nil {
 		log.WithError(err).Error("转换视频时长失败")
@@ -53,6 +58,27 @@ func runWatchVideoTask() {
 		return
 	}
 	log.Infof("播放视频[%s]成功,已观看至%d秒", v.Title, playtime)
+}
+
+func doShareVideo() {
+	v := getVideo()
+	rewardStatus, err := d.GetExpRewardStatus()
+	if err != nil {
+		log.WithError(err).Error("获取每日经验奖励状态失败")
+		return
+	}
+
+	if rewardStatus.Share {
+		log.Info("今日分享视频任务已完成")
+		return
+	}
+
+	err = d.ShareVideo(v.Bvid)
+	if err != nil {
+		log.WithError(err).Error("分享视频失败")
+		return
+	}
+	log.Infof("分享视频[%s]成功", v.Title)
 }
 
 func convertToSeconds(timeStr string) (int, error) {

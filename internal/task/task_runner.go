@@ -1,4 +1,4 @@
-package runner
+package task
 
 import (
 	"context"
@@ -23,10 +23,16 @@ func Run(ctx context.Context) {
 	}
 	ctx = context.WithValue(ctx, "details", details)
 
+	// 执行任务
 	doTask(ctx)
 }
 
 func doTask(ctx context.Context) {
-	runCoinsLogTask()
-	runWatchVideoTask()
+	doCoinsLog()
+	doWatchVideo()
+	doShareVideo()
+	doBigVipPrivilegeTask(ctx)
+	doDonateCoin(ctx)
+	doSilver2Coin()
+	doLiveCheckIn()
 }

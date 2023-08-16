@@ -1,6 +1,6 @@
-package runner
+package task
 
-func runCoinsLogTask() {
+func doCoinsLog() {
 	// 查询B站硬币日志
 	coinsLog, err := d.GetCoinLog()
 	if err != nil {

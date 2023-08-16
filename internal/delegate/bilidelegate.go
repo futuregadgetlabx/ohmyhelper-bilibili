@@ -17,7 +17,7 @@ import (
 )
 
 var (
-	GET_QR_CODE_LOGIN_URL_OLD      = "https://passport.bilibili.com/qrcode/getLoginUrl"
+	GetQrCodeLoginUrlOld           = "https://passport.bilibili.com/qrcode/getLoginUrl"
 	GET_QR_CODE_LOGIN_URL          = "https://passport.bilibili.com/x/passport-login/web/qrcode/generate"
 	GET_QR_CODE_LOGIN_INFO_URL_OLD = "https://passport.bilibili.com/qrcode/getLoginInfo"
 	GET_QR_CODE_LOGIN_INFO_URL     = "https://passport.bilibili.com/x/passport-login/web/qrcode/poll"
@@ -551,7 +551,7 @@ func (bd *BiliDelegate) CheckDonateCoin(bvid string) (*model.DonateCoinInfo, err
 }
 
 // DonateCoin 投币
-func (bd *BiliDelegate) DonateCoin(bvid string, numCoin, isLike int) (ok bool) {
+func (bd *BiliDelegate) DonateCoin(bvid string, numCoin, isLike int) error {
 	data := url.Values{
 		"bvid":         {bvid},
 		"multiply":     {strconv.Itoa(numCoin)},
@@ -562,8 +562,7 @@ func (bd *BiliDelegate) DonateCoin(bvid string, numCoin, isLike int) (ok bool) {
 
 	req, err := http.NewRequest("POST", DonateCoin, bytes.NewBufferString(data.Encode()))
 	if err != nil {
-		log.Errorln(errors.Wrap(err, "构建请求失败"))
-		return false
+		return errors.Wrap(err, "构建投币请求失败")
 	}
 
 	req.Header.Set("Referer", fmt.Sprintf("https://www.bilibili.com/video/%s", bvid))
@@ -572,11 +571,14 @@ func (bd *BiliDelegate) DonateCoin(bvid string, numCoin, isLike int) (ok bool) {
 
 	res, err := bd.call(req)
 	if err != nil {
-		log.Errorln(err)
-		return false
+		return errors.Wrapf(err, "投币失败：%s", res.Message)
 	}
 
-	return res.Code == 0
+	if res.Code != 0 {
+		return errors.New(res.Message)
+	}
+
+	return nil
 }
 
 // GetLiveWallet 获取直播间钱包
@@ -875,7 +877,7 @@ func (bd *BiliDelegate) GetMangaVipReward() (map[string]interface{}, error) {
 }
 
 // GetVipReward 领取大会员权益
-func (bd *BiliDelegate) GetVipReward(tid int) int64 {
+func (bd *BiliDelegate) GetVipReward(tid int) error {
 	params := url.Values{
 		"type": {strconv.Itoa(tid)},
 		"csrf": {bd.Config.BiliJct},
@@ -883,18 +885,30 @@ func (bd *BiliDelegate) GetVipReward(tid int) int64 {
 
 	req, err := http.NewRequest("POST", GetVipReward, bytes.NewBufferString(params.Encode()))
 	if err != nil {
-		log.Errorln(errors.Wrap(err, "构建请求失败"))
-		return -1
+		return errors.Wrap(err, "构建领取大会员权益请求失败")
 	}
 	req.Header.Set("Referer", "https://www.bilibili.com/")
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
 
 	res, err := bd.call(req)
 	if err != nil {
-		return -1
+		return errors.Wrap(err, "领取大会员权益失败")
 	}
 
-	return res.Code
+	switch res.Code {
+	case -101:
+		return errors.New("账号未登录")
+	case -111:
+		return errors.New("csrf 校验失败")
+	case -400:
+		return errors.New("请求错误")
+	case 69800:
+		return errors.New("网络繁忙 请稍后再试")
+	case 69801:
+		return errors.New("你已领取过该权益")
+	default:
+		return nil
+	}
 }
 
 // ReadManga 阅读漫画
