@@ -113,7 +113,7 @@ func (bd *BiliDelegate) GetUserDetails() (*model.BiliUserDetails, error) {
 
 	var ud model.BiliUserDetails
 	var mapConfig = &mapstructure.DecoderConfig{
-		ErrorUnused: true,
+		ErrorUnused: false,
 		Result:      &ud,
 		TagName:     "json",
 	}
@@ -146,7 +146,7 @@ func (bd *BiliDelegate) GetSpaceAccInfo(dedeuserid string) (*model.SpaceAccInfo,
 
 	var sai model.SpaceAccInfo
 	var mapConfig = &mapstructure.DecoderConfig{
-		ErrorUnused: true,
+		ErrorUnused: false,
 		Result:      &sai,
 		TagName:     "json",
 	}
@@ -177,7 +177,7 @@ func (bd *BiliDelegate) GetCoinLog() (*model.CoinLog, error) {
 
 	var cl model.CoinLog
 	var mapConfig = &mapstructure.DecoderConfig{
-		ErrorUnused: true,
+		ErrorUnused: false,
 		Result:      &cl,
 		TagName:     "json",
 	}
@@ -212,7 +212,7 @@ func (bd *BiliDelegate) GetLiveRoomInfo(dedeuserid int) (*model.LiveRoom, error)
 
 	var lr model.LiveRoom
 	var mapConfig = &mapstructure.DecoderConfig{
-		ErrorUnused: true,
+		ErrorUnused: false,
 		Result:      &lr,
 		TagName:     "json",
 	}
@@ -246,7 +246,7 @@ func (bd *BiliDelegate) GetMedalWall() (*model.MedalWall, error) {
 
 	var mw model.MedalWall
 	var mapConfig = &mapstructure.DecoderConfig{
-		ErrorUnused: true,
+		ErrorUnused: false,
 		Result:      &mw,
 		TagName:     "json",
 	}
@@ -298,7 +298,7 @@ func (bd *BiliDelegate) GetExpRewardStatus() (*model.ExpRewardStatus, error) {
 
 	var ers model.ExpRewardStatus
 	var mapConfig = &mapstructure.DecoderConfig{
-		ErrorUnused: true,
+		ErrorUnused: false,
 		Result:      &ers,
 		TagName:     "json",
 	}
@@ -337,7 +337,7 @@ func (bd *BiliDelegate) GetTrendVideo(rid int) ([]model.RegionRank, error) {
 	}
 	var regionRank []model.RegionRank
 	var mapConfig = &mapstructure.DecoderConfig{
-		ErrorUnused: true,
+		ErrorUnused: false,
 		Result:      &regionRank,
 		TagName:     "json",
 	}
@@ -354,7 +354,7 @@ func (bd *BiliDelegate) GetTrendVideo(rid int) ([]model.RegionRank, error) {
 }
 
 // PlayVideo 观看视频
-func (bd *BiliDelegate) PlayVideo(vid string, playedTime int) (ok bool) {
+func (bd *BiliDelegate) PlayVideo(vid string, playedTime int) error {
 	data := url.Values{
 		"mid":              {strconv.Itoa(bd.Config.Dedeuserid)},
 		"type":             {"4"},
@@ -373,23 +373,22 @@ func (bd *BiliDelegate) PlayVideo(vid string, playedTime int) (ok bool) {
 
 	req, err := http.NewRequest("POST", ReportHeartbeat, strings.NewReader(data.Encode()))
 	if err != nil {
-		log.Errorln(errors.Wrap(err, "构建请求失败"))
-		return false
+		return errors.Wrap(err, "构建请求失败")
 	}
 
 	req.Header.Set("Referer", "https://www.bilibili.com/")
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
 
 	res, err := bd.call(req)
-	if err != nil {
-		return false
+	if err != nil || res.Code != 0 {
+		return errors.Wrapf(err, "请求接口%s失败：%s", ShareVideo, res.Message)
 	}
 
-	return res.Code == 0
+	return nil
 }
 
 // ShareVideo 分享视频
-func (bd *BiliDelegate) ShareVideo(bvid string) (ok bool) {
+func (bd *BiliDelegate) ShareVideo(bvid string) error {
 	data := url.Values{
 		"bvid": {bvid},
 		"csrf": {bd.Config.BiliJct},
@@ -397,19 +396,17 @@ func (bd *BiliDelegate) ShareVideo(bvid string) (ok bool) {
 
 	req, err := http.NewRequest("POST", ShareVideo, strings.NewReader(data.Encode()))
 	if err != nil {
-		log.Errorln(errors.Wrap(err, "构建请求失败"))
-		return false
+		return errors.Wrap(err, "构建请求失败")
 	}
 
 	req.Header.Set("Referer", "https://www.bilibili.com/")
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
 
 	res, err := bd.call(req)
-	if err != nil {
-		return false
+	if err != nil || res.Code != 0 {
+		return errors.Wrapf(err, "请求接口%s失败：%s", ShareVideo, res.Message)
 	}
-
-	return res.Code == 0
+	return nil
 }
 
 // MangaCheckIn 漫画签到
@@ -469,7 +466,7 @@ func (bd *BiliDelegate) GetVideoDetails(vid string) (*model.VideoDetails, error)
 
 	var videoDetails model.VideoDetails
 	var mapConfig = &mapstructure.DecoderConfig{
-		ErrorUnused: true,
+		ErrorUnused: false,
 		Result:      &videoDetails,
 		TagName:     "json",
 	}
@@ -501,7 +498,7 @@ func (bd *BiliDelegate) GetCoin() (*model.CoinInfo, error) {
 
 	var coinInfo model.CoinInfo
 	var mapConfig = &mapstructure.DecoderConfig{
-		ErrorUnused: true,
+		ErrorUnused: false,
 		Result:      &coinInfo,
 		TagName:     "json",
 	}
@@ -537,7 +534,7 @@ func (bd *BiliDelegate) CheckDonateCoin(bvid string) (*model.DonateCoinInfo, err
 
 	var donateCoinInfo model.DonateCoinInfo
 	var mapConfig = &mapstructure.DecoderConfig{
-		ErrorUnused: true,
+		ErrorUnused: false,
 		Result:      &donateCoinInfo,
 		TagName:     "json",
 	}
@@ -602,7 +599,7 @@ func (bd *BiliDelegate) GetLiveWallet() (*model.LiveWallet, error) {
 
 	var wallet model.LiveWallet
 	var mapConfig = &mapstructure.DecoderConfig{
-		ErrorUnused: true,
+		ErrorUnused: false,
 		Result:      &wallet,
 		TagName:     "json",
 	}
@@ -667,7 +664,7 @@ func (bd *BiliDelegate) LiveCheckIn() (*model.LiveCheckIn, error) {
 
 	var checkIn model.LiveCheckIn
 	var mapConfig = &mapstructure.DecoderConfig{
-		ErrorUnused: true,
+		ErrorUnused: false,
 		Result:      &checkIn,
 		TagName:     "json",
 	}
@@ -700,7 +697,7 @@ func (bd *BiliDelegate) ListGifts() (*model.GiftList, error) {
 	var glist model.GiftList
 
 	var mapConfig = &mapstructure.DecoderConfig{
-		ErrorUnused: true,
+		ErrorUnused: false,
 		Result:      &glist,
 		TagName:     "json",
 	}
@@ -777,7 +774,7 @@ func (bd *BiliDelegate) GetChargeInfo() (*model.ChargeInfo, error) {
 
 	var info model.ChargeInfo
 	var mapConfig = &mapstructure.DecoderConfig{
-		ErrorUnused: true,
+		ErrorUnused: false,
 		Result:      &info,
 		TagName:     "json",
 	}
@@ -818,7 +815,7 @@ func (bd *BiliDelegate) DoCharge(coupon, uid int) (*model.ChargeResponse, error)
 	}
 	var cr model.ChargeResponse
 	var mapConfig = &mapstructure.DecoderConfig{
-		ErrorUnused: true,
+		ErrorUnused: false,
 		Result:      &cr,
 		TagName:     "json",
 	}

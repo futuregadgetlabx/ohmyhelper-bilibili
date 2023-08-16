@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"encoding/hex"
 	"fmt"
 	"github.com/fsnotify/fsnotify"
 	"github.com/google/uuid"
@@ -12,14 +13,18 @@ import (
 	"gorm.io/gorm"
 	"ohmyhelper-bilibili/internal/delegate"
 	"ohmyhelper-bilibili/internal/runner"
+	"ohmyhelper-bilibili/pkg/util"
 	"os"
 	"path"
 	"runtime"
 	"strconv"
 )
 
+var log *logrus.Entry
+
 func main() {
 	ctx := context.Background()
+
 	logrus.SetReportCaller(true)
 	logrus.SetFormatter(&logrus.JSONFormatter{
 		//以下设置只是为了使输出更美观
@@ -31,14 +36,15 @@ func main() {
 			return "", fileName + ":" + strconv.Itoa(frame.Line)
 		},
 	})
-
 	// 生成UUID
 	traceID := uuid.New().String()
-	ctx = context.WithValue(ctx, "X-Trace-ID", traceID)
+	ctx = context.WithValue(ctx, "traceID", traceID)
 	biliUserID := os.Getenv("BILIBILI_USERID")
 	ctx = context.WithValue(ctx, "biliUserID", biliUserID)
-	log := logrus.WithField("traceID", traceID).WithField("biliUserID", biliUserID)
-
+	log = logrus.WithFields(logrus.Fields{
+		"traceId":    traceID,
+		"biliUserID": biliUserID,
+	})
 	// 使用viper解析yaml配置
 	viper.SetConfigFile("conf/config.yaml")
 	err := viper.ReadInConfig()
@@ -68,17 +74,18 @@ func main() {
 	userid := biliUserID
 	taskConfig := &delegate.BiliTaskConfig{}
 	err = db.Table("task_config").Where("dedeuserid = ?", userid).Find(&taskConfig).Error
+	decodeSessdata, _ := hex.DecodeString(taskConfig.Sessdata)
+	decodeBiliJct, _ := hex.DecodeString(taskConfig.BiliJct)
+	secret := []byte(os.Getenv("SECRET_KEY"))
+	taskConfig.Sessdata = string(util.AesDecrypt(decodeSessdata, secret))
+	taskConfig.BiliJct = string(util.AesDecrypt(decodeBiliJct, secret))
 	ctx = context.WithValue(ctx, "taskConfig", taskConfig)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// run task
-	err = runner.Run(ctx)
-
-	if err != nil {
-		log.Errorf("任务执行失败: %s", err)
-	}
+	runner.Run(ctx)
 
 	d, err := db.DB()
 	if err != nil {
