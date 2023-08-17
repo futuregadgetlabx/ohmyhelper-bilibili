@@ -20,6 +20,7 @@ func Run(ctx context.Context) {
 	details, err := d.GetUserDetails()
 	if err != nil {
 		log.WithError(err).Error("获取用户详情失败")
+		return
 	}
 	ctx = context.WithValue(ctx, "details", details)
 
@@ -35,4 +36,6 @@ func doTask(ctx context.Context) {
 	doDonateCoin(ctx)
 	doSilver2Coin()
 	doLiveCheckIn()
+	doDonateGift(ctx)
+	doChargeTask(ctx)
 }
