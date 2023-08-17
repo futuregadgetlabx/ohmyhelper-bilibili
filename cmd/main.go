@@ -24,7 +24,11 @@ var log *logrus.Entry
 
 func main() {
 	ctx := context.Background()
-
+	err := os.WriteFile("/data/ohmyhelper/jobstatus", []byte("Running"), 0644)
+	if err != nil {
+		log.Println("写入文件失败/data/ohmyhelper/jobstatus: ", err)
+		return
+	}
 	logrus.SetReportCaller(true)
 	logrus.SetFormatter(&logrus.JSONFormatter{
 		//以下设置只是为了使输出更美观
@@ -39,7 +43,7 @@ func main() {
 	// 生成UUID
 	traceID := uuid.New().String()
 	ctx = context.WithValue(ctx, "traceID", traceID)
-	biliUserID := os.Getenv("BILIBILI_USERID")
+	biliUserID := os.Getenv("BILIBILI_USER_ID")
 	ctx = context.WithValue(ctx, "biliUserID", biliUserID)
 	log = logrus.WithFields(logrus.Fields{
 		"traceId":    traceID,
@@ -47,7 +51,7 @@ func main() {
 	})
 	// 使用viper解析yaml配置
 	viper.SetConfigFile("conf/config.yaml")
-	err := viper.ReadInConfig()
+	err = viper.ReadInConfig()
 	if err != nil {
 		log.Fatalf("读取配置文件失败: %v", err)
 	}
@@ -97,4 +101,10 @@ func main() {
 			return
 		}
 	}(d)
+
+	err = os.WriteFile("/data/ohmyhelper/jobstatus", []byte("Completed"), 0644)
+	if err != nil {
+		log.Println("写入文件失败/data/ohmyhelper/jobstatus: ", err)
+		return
+	}
 }
