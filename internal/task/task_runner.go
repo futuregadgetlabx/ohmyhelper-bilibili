@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/sirupsen/logrus"
 	"ohmyhelper-bilibili/internal/delegate"
+	"time"
 )
 
 var log *logrus.Entry
@@ -30,12 +31,20 @@ func Run(ctx context.Context) {
 
 func doTask(ctx context.Context) {
 	doCoinsLog()
+	time.Sleep(3 * time.Second)
 	doWatchVideo()
+	time.Sleep(3 * time.Second)
 	doShareVideo()
+	time.Sleep(3 * time.Second)
 	doBigVipPrivilegeTask(ctx)
+	time.Sleep(3 * time.Second)
 	doDonateCoin(ctx)
+	time.Sleep(3 * time.Second)
 	doSilver2Coin()
+	time.Sleep(3 * time.Second)
 	doLiveCheckIn()
+	time.Sleep(3 * time.Second)
 	doDonateGift(ctx)
+	time.Sleep(3 * time.Second)
 	doChargeTask(ctx)
 }
