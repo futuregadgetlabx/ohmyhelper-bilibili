@@ -18,7 +18,7 @@ func init() {
 	logrus.SetReportCaller(true)
 	logrus.SetFormatter(&logrus.JSONFormatter{
 		//以下设置只是为了使输出更美观
-		TimestampFormat: "2006-01-02 15:03:04",
+		TimestampFormat: "2006-01-02 15:04:05",
 		CallerPrettyfier: func(frame *runtime.Frame) (function string, file string) {
 			//处理文件名
 			fileName := path.Base(frame.File)
@@ -30,21 +30,19 @@ func init() {
 func main() {
 	ctx := context.Background()
 	// 生成UUID
-	traceID := uuid.New().String()
-	ctx = context.WithValue(ctx, "traceID", traceID)
-	biliUserID := os.Getenv("BILIBILI_USER_ID")
-	ctx = context.WithValue(ctx, "biliUserID", biliUserID)
-	log = logrus.WithFields(logrus.Fields{
-		"traceId":    traceID,
-		"biliUserID": biliUserID,
-	})
 
 	taskConfig, err := parseConfig()
 	if err != nil {
 		log.WithError(err).Error("初始化任务配置失败")
 		return
 	}
-
+	traceID := uuid.New().String()
+	ctx = context.WithValue(ctx, "traceID", traceID)
+	ctx = context.WithValue(ctx, "biliUserID", taskConfig.Dedeuserid)
+	log = logrus.WithFields(logrus.Fields{
+		"traceId":    traceID,
+		"biliUserID": taskConfig.Dedeuserid,
+	})
 	ctx = context.WithValue(ctx, "taskConfig", taskConfig)
 
 	// run task
