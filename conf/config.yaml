@@ -1,8 +1,0 @@
-db:
-  host: 43.129.246.22
-  port: 3306
-  user: root
-  password: a949953001
-  database: bilibili_helper_hub
-  driver: mysql
-  loc: Asia/Shanghai

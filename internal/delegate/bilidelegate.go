@@ -77,7 +77,7 @@ type BiliTaskConfig struct {
 	DonateGiftTarget   int     `json:"donateGiftTarget" gorm:"column:donate_gift_target"`
 	AutoChargeTarget   int     `json:"autoChargeTarget" gorm:"column:auto_charge_target"`
 	DevicePlatform     string  `json:"devicePlatform" gorm:"column:device_platform"`
-	DonateCoinStrategy string  `json:"donateCoin_strategy" gorm:"column:donate_coin_strategy"`
+	DonateCoinStrategy string  `json:"donateCoinStrategy" gorm:"column:donate_coin_strategy"`
 	UserAgent          string  `json:"userAgent" gorm:"column:user_agent"`
 	FollowDeveloper    bool    `json:"followDeveloper" gorm:"column:follow_developer"`
 }

@@ -42,6 +42,7 @@ func doChargeTask(ctx context.Context) {
 		return
 	}
 
+	log.Infof("为账号%d充电成功\n", target)
 	orderNo := chargeResponse.OrderNo
 	_ = d.DoChargeComment(orderNo)
 }
