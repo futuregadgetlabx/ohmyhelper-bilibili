@@ -11,6 +11,5 @@ WORKDIR /app
 RUN apk update && apk add tzdata
 RUN cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 RUN echo "Asia/Shanghai" > /etc/timezone
-RUN date -R
 COPY --from=build /app/bilibili /app/
 ENTRYPOINT ["./bilibili"]

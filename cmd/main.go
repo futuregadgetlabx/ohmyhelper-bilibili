@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
+	"io"
 	"ohmyhelper-bilibili/internal/delegate"
 	"ohmyhelper-bilibili/internal/task"
 	"os"
@@ -26,6 +27,16 @@ func init() {
 			return "", fileName + ":" + strconv.Itoa(frame.Line)
 		},
 	})
+	f, err := os.OpenFile("app.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	if err != nil {
+		logrus.WithError(err).Panic("open log file failed")
+	}
+	writers := []io.Writer{
+		f,
+		os.Stderr,
+	}
+	multiWriter := io.MultiWriter(writers...)
+	logrus.SetOutput(multiWriter)
 }
 func main() {
 	ctx := context.Background()
@@ -46,7 +57,12 @@ func main() {
 	ctx = context.WithValue(ctx, "taskConfig", taskConfig)
 
 	// run task
-	task.Run(ctx)
+	runner, err := task.NewRunner(ctx)
+	if err != nil {
+		log.WithError(err).Fatal("初始化任务失败")
+	}
+	runner.Run(ctx)
+	runner.Summery(ctx)
 }
 
 func parseConfig() (*delegate.BiliTaskConfig, error) {
