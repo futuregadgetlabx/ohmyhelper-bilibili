@@ -5,6 +5,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"ohmyhelper-bilibili/internal/delegate"
+	"os"
 	"time"
 )
 
@@ -18,11 +19,11 @@ type Runner struct {
 
 func NewRunner(ctx context.Context) (*Runner, error) {
 	traceID := ctx.Value("traceID").(string)
-	config := ctx.Value("taskConfig").(*delegate.BiliTaskConfig)
-	log = logrus.WithField("traceID", traceID).WithField("biliUserID", config.Dedeuserid)
+	dedeuserid := os.Getenv("DEDE_USER_ID")
+	log = logrus.WithField("traceID", traceID).WithField("biliUserID", dedeuserid)
 
 	// 获取B站用户详情
-	d := delegate.NewDelegate(config, false)
+	d := delegate.NewDelegate(false)
 	details, err := d.GetUserDetails()
 	if err != nil {
 		return nil, errors.Wrap(err, "cookie过期")
@@ -63,7 +64,7 @@ func (r *Runner) Run(ctx context.Context) {
 	log.Info("=====🌟任务全部完成🌟====")
 }
 
-func (r *Runner) Summery(ctx context.Context) {
+func (r *Runner) Summary(ctx context.Context) {
 	details, err := r.d.GetUserDetails()
 	if err != nil {
 		log.WithError(err).Error("任务总结异常")

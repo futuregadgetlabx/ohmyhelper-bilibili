@@ -285,7 +285,7 @@ type LiveRoom struct {
 		} `json:"master_level"`
 	} `json:"exp"`
 	FollowerNum  int    `json:"follower_num"`
-	RoomID       int    `json:"room_id"`
+	RoomID       string `json:"room_id"`
 	MedalName    string `json:"medal_name"`
 	GloryCount   int    `json:"glory_count"`
 	Pendant      string `json:"pendant"`
@@ -561,8 +561,8 @@ type LiveCheckIn struct {
 
 type GiftList struct {
 	List []struct {
-		BagID       int    `json:"bag_id"`
-		GiftID      int    `json:"gift_id"`
+		BagID       string `json:"bag_id"`
+		GiftID      string `json:"gift_id"`
 		GiftName    string `json:"gift_name"`
 		GiftNum     int    `json:"gift_num"`
 		GiftType    int    `json:"gift_type"`

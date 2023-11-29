@@ -6,7 +6,7 @@ ADD . .
 RUN go mod download
 RUN go build -o /app/bilibili cmd/main.go
 
-FROM alpine:latest
+FROM alpine:1.21
 WORKDIR /app
 RUN apk update && apk add tzdata
 RUN cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime

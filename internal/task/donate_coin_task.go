@@ -22,9 +22,9 @@ func NewDonateCoinTask(ctx context.Context, d *delegate.BiliDelegate) *DonateCoi
 func (d *DonateCoinTask) Run() {
 	details := d.ctx.Value("details").(*model.BiliUserDetails)
 	coins := details.Coins
-	config := d.ctx.Value("taskConfig").(*delegate.BiliTaskConfig)
+	config := d.d.Config
 	if coins <= float64(config.ReserveCoins) {
-		log.Errorf("账户余额不足%d，无法进行投币任务", config.ReserveCoins)
+		log.Errorf("账户余额不足%delegate，无法进行投币任务", config.ReserveCoins)
 		return
 	}
 

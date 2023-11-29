@@ -66,30 +66,14 @@ var (
 )
 var userAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36"
 
-type BiliTaskConfig struct {
-	Dedeuserid         int     `json:"dedeuserid" gorm:"column:dedeuserid"`
-	Sessdata           string  `json:"sessdata" gorm:"column:sessdata"`
-	BiliJct            string  `json:"biliJct" gorm:"column:bili_jct"`
-	DonateCoins        float64 `json:"donateCoins" gorm:"column:donate_coins"`
-	ReserveCoins       int     `json:"reserveCoins" gorm:"column:reserve_coins"`
-	AutoCharge         bool    `json:"autoCharge" gorm:"column:auto_charge"`
-	DonateGift         bool    `json:"donateGift" gorm:"column:donate_gift"`
-	DonateGiftTarget   int     `json:"donateGiftTarget" gorm:"column:donate_gift_target"`
-	AutoChargeTarget   int     `json:"autoChargeTarget" gorm:"column:auto_charge_target"`
-	DevicePlatform     string  `json:"devicePlatform" gorm:"column:device_platform"`
-	DonateCoinStrategy string  `json:"donateCoinStrategy" gorm:"column:donate_coin_strategy"`
-	UserAgent          string  `json:"userAgent" gorm:"column:user_agent"`
-	FollowDeveloper    bool    `json:"followDeveloper" gorm:"column:follow_developer"`
-}
-
 type BiliDelegate struct {
-	Config   *BiliTaskConfig
+	Config   biliTaskConfig
 	SafeMode bool
 }
 
-func NewDelegate(config *BiliTaskConfig, safeMode bool) *BiliDelegate {
+func NewDelegate(safeMode bool) *BiliDelegate {
 	return &BiliDelegate{
-		Config:   config,
+		Config:   taskConfig,
 		SafeMode: safeMode,
 	}
 }
@@ -193,9 +177,9 @@ func (bd *BiliDelegate) GetCoinLog() (*model.CoinLog, error) {
 	return &cl, nil
 }
 
-func (bd *BiliDelegate) GetLiveRoomInfo(dedeuserid int) (*model.LiveRoom, error) {
+func (bd *BiliDelegate) GetLiveRoomInfo(dedeuserid string) (*model.LiveRoom, error) {
 	params := url.Values{
-		"uid": {strconv.Itoa(dedeuserid)},
+		"uid": {dedeuserid},
 	}
 
 	req, err := http.NewRequest("GET", GetLiveRoomInfo+"?"+params.Encode(), nil)
@@ -230,7 +214,7 @@ func (bd *BiliDelegate) GetLiveRoomInfo(dedeuserid int) (*model.LiveRoom, error)
 
 func (bd *BiliDelegate) GetMedalWall() (*model.MedalWall, error) {
 	params := url.Values{
-		"target_id": {strconv.Itoa(bd.Config.Dedeuserid)},
+		"target_id": {bd.Config.Dedeuserid},
 	}
 	req, err := http.NewRequest("GET", GetMedalWall+"?"+params.Encode(), nil)
 	if err != nil {
@@ -356,7 +340,7 @@ func (bd *BiliDelegate) GetTrendVideo(rid int) ([]model.RegionRank, error) {
 // PlayVideo 观看视频
 func (bd *BiliDelegate) PlayVideo(vid string, playedTime int) error {
 	data := url.Values{
-		"mid":              {strconv.Itoa(bd.Config.Dedeuserid)},
+		"mid":              {bd.Config.Dedeuserid},
 		"type":             {"4"},
 		"sub_type":         {"1"},
 		"play_type":        {"2"},
@@ -716,14 +700,14 @@ func (bd *BiliDelegate) ListGifts() (*model.GiftList, error) {
 }
 
 // DonateGift 赠送礼物
-func (bd *BiliDelegate) DonateGift(uid, roomId, bagId, giftId, num int) error {
+func (bd *BiliDelegate) DonateGift(uid, roomId, bagId, giftId string, num int) error {
 	params := url.Values{
-		"biz_id":        {strconv.Itoa(roomId)},
-		"ruid":          {strconv.Itoa(uid)},
-		"bag_id":        {strconv.Itoa(bagId)},
-		"gift_id":       {strconv.Itoa(giftId)},
+		"biz_id":        {roomId},
+		"ruid":          {uid},
+		"bag_id":        {bagId},
+		"gift_id":       {giftId},
 		"gift_num":      {strconv.Itoa(num)},
-		"uid":           {strconv.Itoa(bd.Config.Dedeuserid)},
+		"uid":           {bd.Config.Dedeuserid},
 		"csrf":          {bd.Config.BiliJct},
 		"send_ruid":     {"0"},
 		"storm_beat_id": {"0"},
@@ -755,7 +739,7 @@ func (bd *BiliDelegate) DonateGift(uid, roomId, bagId, giftId, num int) error {
 // GetChargeInfo 获取充电信息
 func (bd *BiliDelegate) GetChargeInfo() (*model.ChargeInfo, error) {
 	params := url.Values{
-		"mid": {strconv.Itoa(bd.Config.Dedeuserid)},
+		"mid": {bd.Config.Dedeuserid},
 	}
 
 	req, err := http.NewRequest("GET", GetChargeInfo+"?"+params.Encode(), nil)
@@ -793,13 +777,13 @@ func (bd *BiliDelegate) GetChargeInfo() (*model.ChargeInfo, error) {
 }
 
 // DoCharge 充电
-func (bd *BiliDelegate) DoCharge(coupon, uid int) (*model.ChargeResponse, error) {
+func (bd *BiliDelegate) DoCharge(coupon int, uid string) (*model.ChargeResponse, error) {
 	params := url.Values{
 		"bp_num":              {strconv.Itoa(coupon)},
 		"is_bp_remains_prior": {"true"},
-		"up_mid":              {strconv.Itoa(uid)},
+		"up_mid":              {uid},
 		"otype":               {"up"},
-		"oid":                 {strconv.Itoa(bd.Config.Dedeuserid)},
+		"oid":                 {bd.Config.Dedeuserid},
 		"csrf":                {bd.Config.BiliJct},
 	}
 
@@ -962,7 +946,7 @@ func (bd *BiliDelegate) call(r *http.Request) (*BiliResponse, error) {
 	// 设置Cookie
 	r.AddCookie(&http.Cookie{Name: "SESSDATA", Value: bd.Config.Sessdata})
 	r.AddCookie(&http.Cookie{Name: "bili_jct", Value: bd.Config.BiliJct})
-	r.AddCookie(&http.Cookie{Name: "DedeUserID", Value: strconv.Itoa(bd.Config.Dedeuserid)})
+	r.AddCookie(&http.Cookie{Name: "DedeUserID", Value: bd.Config.Dedeuserid})
 	r.AddCookie(&http.Cookie{Name: "buvid3", Value: "3140CB9C-51C2-DC5B-F1A9-1F432B3D6E7B79263infoc"})
 	r.AddCookie(&http.Cookie{Name: "innersign", Value: "0"})
 

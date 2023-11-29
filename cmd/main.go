@@ -5,7 +5,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"io"
-	"ohmyhelper-bilibili/internal/delegate"
 	"ohmyhelper-bilibili/internal/task"
 	"os"
 	"path"
@@ -41,20 +40,16 @@ func init() {
 func main() {
 	ctx := context.Background()
 	// 生成UUID
+	traceId := uuid.New().String()
 
-	taskConfig, err := parseConfig()
-	if err != nil {
-		log.WithError(err).Error("初始化任务配置失败")
-		return
-	}
-	traceID := uuid.New().String()
-	ctx = context.WithValue(ctx, "traceID", traceID)
-	ctx = context.WithValue(ctx, "biliUserID", taskConfig.Dedeuserid)
+	ctx = context.WithValue(ctx, "traceId", traceId)
+	dedeuserid := os.Getenv("DEDE_USER_ID")
+	ctx = context.WithValue(ctx, "biliUserID", dedeuserid)
 	log = logrus.WithFields(logrus.Fields{
-		"traceId":    traceID,
-		"biliUserID": taskConfig.Dedeuserid,
+		"traceId":    traceId,
+		"biliUserId": dedeuserid,
 	})
-	ctx = context.WithValue(ctx, "taskConfig", taskConfig)
+	ctx = context.WithValue(ctx, "taskConfig", dedeuserid)
 
 	// run task
 	runner, err := task.NewRunner(ctx)
@@ -62,79 +57,5 @@ func main() {
 		log.WithError(err).Fatal("初始化任务失败")
 	}
 	runner.Run(ctx)
-	runner.Summery(ctx)
-}
-
-func parseConfig() (*delegate.BiliTaskConfig, error) {
-	dedeuseridStr := os.Getenv("dedeuserid")
-	dedeuserid, err := strconv.Atoi(dedeuseridStr)
-	if err != nil {
-		log.WithError(err).Errorf("string to int error:  %s", dedeuseridStr)
-		return nil, err
-	}
-
-	donateCoinsStr := os.Getenv("donateCoins")
-	donateCoins, err := strconv.ParseFloat(donateCoinsStr, 10)
-	if err != nil {
-		log.WithError(err).Errorf("string to float64 error:  %s", donateCoinsStr)
-		return nil, err
-	}
-
-	reserveCoinsStr := os.Getenv("reserveCoins")
-	reserveCoins, err := strconv.Atoi(reserveCoinsStr)
-	if err != nil {
-		log.WithError(err).Errorf("string to int error:  %s", reserveCoinsStr)
-		return nil, err
-	}
-
-	autoChargeStr := os.Getenv("autoCharge")
-	autoCharge, err := strconv.ParseBool(autoChargeStr)
-	if err != nil {
-		log.WithError(err).Errorf("string to bool error:  %s", autoChargeStr)
-		return nil, err
-	}
-
-	donateGiftStr := os.Getenv("donateGift")
-	donateGift, err := strconv.ParseBool(donateGiftStr)
-	if err != nil {
-		log.WithError(err).Errorf("string to bool error:  %s", autoChargeStr)
-		return nil, err
-	}
-
-	donateGiftTargetStr := os.Getenv("donateGiftTarget")
-	donateGiftTarget, err := strconv.Atoi(donateGiftTargetStr)
-	if err != nil {
-		log.WithError(err).Errorf("string to int error:  %s", donateGiftTargetStr)
-		return nil, err
-	}
-
-	autoChargeTargetStr := os.Getenv("autoChargeTarget")
-	autoChargeTarget, err := strconv.Atoi(autoChargeTargetStr)
-	if err != nil {
-		log.WithError(err).Errorf("string to int error:  %s", autoChargeTargetStr)
-		return nil, err
-	}
-
-	followDeveloperStr := os.Getenv("followDeveloper")
-	followDeveloper, err := strconv.ParseBool(followDeveloperStr)
-	if err != nil {
-		log.WithError(err).Errorf("string to bool error:  %s", followDeveloperStr)
-		return nil, err
-	}
-	taskConfig := &delegate.BiliTaskConfig{
-		Dedeuserid:         dedeuserid,
-		Sessdata:           os.Getenv("sessdata"),
-		BiliJct:            os.Getenv("biliJct"),
-		DonateCoins:        donateCoins,
-		ReserveCoins:       reserveCoins,
-		AutoCharge:         autoCharge,
-		DonateGift:         donateGift,
-		DonateGiftTarget:   donateGiftTarget,
-		AutoChargeTarget:   autoChargeTarget,
-		DevicePlatform:     os.Getenv("devicePlatform"),
-		DonateCoinStrategy: os.Getenv("donateCoinStrategy"),
-		UserAgent:          os.Getenv("userAgent"),
-		FollowDeveloper:    followDeveloper,
-	}
-	return taskConfig, nil
+	runner.Summary(ctx)
 }

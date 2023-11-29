@@ -4,8 +4,6 @@ import (
 	"context"
 	"ohmyhelper-bilibili/internal/delegate"
 	"ohmyhelper-bilibili/internal/model"
-	"os"
-	"strconv"
 )
 
 type ChargeTask struct {
@@ -22,7 +20,7 @@ func NewChargeTask(ctx context.Context, d *delegate.BiliDelegate) *ChargeTask {
 
 func (c *ChargeTask) Run() {
 	details := c.ctx.Value("details").(*model.BiliUserDetails)
-	config := c.ctx.Value("taskConfig").(*delegate.BiliTaskConfig)
+	config := c.d.Config
 
 	vipType := details.Vip.Type
 	if vipType != 2 {
@@ -42,35 +40,22 @@ func (c *ChargeTask) Run() {
 		return
 	}
 
-	target, err := getChargeTarget(config)
-	if err != nil {
-		log.WithError(err).Error("获取充电对象信息失败")
-		return
+	chargeTarget := config.AutoChargeTarget
+	if chargeTarget == "" {
+		chargeTarget = "287969457"
 	}
 
-	chargeResponse, err := c.d.DoCharge(couponBalance, target)
+	chargeResponse, err := c.d.DoCharge(couponBalance, chargeTarget)
 	if err != nil {
 		log.WithError(err).Error("执行充电失败")
 		return
 	}
 
-	log.Infof("为账号%d充电成功", target)
+	log.Infof("为账号%d充电成功", chargeTarget)
 	orderNo := chargeResponse.OrderNo
 	_ = c.d.DoChargeComment(orderNo)
 }
 
 func (c *ChargeTask) Name() string {
 	return "充电"
-}
-
-func getChargeTarget(config *delegate.BiliTaskConfig) (userID int, err error) {
-	userID = config.AutoChargeTarget
-	if userID == 0 {
-		userID, err = strconv.Atoi(os.Getenv("AUTHOR_ID"))
-		if err != nil {
-			return 0, err
-		}
-	}
-
-	return userID, nil
 }
