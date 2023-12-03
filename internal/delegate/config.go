@@ -2,7 +2,6 @@ package delegate
 
 import (
 	"github.com/caarlos0/env/v6"
-	"github.com/joho/godotenv"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -24,10 +23,6 @@ type biliTaskConfig struct {
 }
 
 func init() {
-	if err := godotenv.Load(); err != nil {
-		log.Error("Can not read env from file system, please check the right this program owned.")
-	}
-
 	taskConfig = biliTaskConfig{}
 
 	if err := env.Parse(&taskConfig); err != nil {

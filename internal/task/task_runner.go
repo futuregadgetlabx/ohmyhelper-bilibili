@@ -18,9 +18,9 @@ type Runner struct {
 }
 
 func NewRunner(ctx context.Context) (*Runner, error) {
-	traceID := ctx.Value("traceID").(string)
+	traceId := ctx.Value("traceId").(string)
 	dedeuserid := os.Getenv("DEDE_USER_ID")
-	log = logrus.WithField("traceID", traceID).WithField("biliUserID", dedeuserid)
+	log = logrus.WithField("traceId", traceId).WithField("biliUserID", dedeuserid)
 
 	// 获取B站用户详情
 	d := delegate.NewDelegate(false)
